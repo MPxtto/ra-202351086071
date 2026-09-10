@@ -1,0 +1,39 @@
+CENÁRIO 01 — TechStore — o catálogo camaleão
+Respostas:
+Modelo Recomendado: Documento
+Cada categoria possui atributos diferentes, evitando uma tabela com dezenas de colunas NULL.
+Novos atributos surgem frequentemente, e o modelo de documentos permite maior flexibilidade sem precisar alterar o esquema toda semana.
+O produto geralmente é lido inteiro, o que combina bem com documentos que armazenam os dados juntos.
+Principal risco: Pode haver dificuldade para fazer consultas e relatórios complexos cruzando produtos de diferentes categorias.
+
+CENÁRIO 02 — MegaCart — o carrinho da Black Friday
+Respostas:
+Modelo Recomendado: Chave-valor
+O acesso é sempre feito pela chave do cliente, sem necessidade de buscas ou filtros.
+O sistema precisa de latência de poucos milissegundos e milhões de operações por minuto.
+Os carrinhos possuem expiração automática em 48 horas, o que combina com TTL.
+Principal risco: Pode haver dificuldade para realizar consultas mais complexas sobre os carrinhos.
+
+CENÁRIO 03 — PayBank — dinheiro não pode evaporar
+Respostas:
+Modelo Recomendado: Relacional
+A transferência precisa debitar e creditar as contas juntas ou não realizar nenhuma das operações, exigindo transações e consistência forte.
+Os relatórios precisam realizar vários joins entre contas, clientes, agências e transações.
+O esquema é estável há muitos anos.
+Principal risco: Pode apresentar dificuldades para escalar horizontalmente em volumes extremamente altos.
+
+CENÁRIO 04 — FriendLink — amigos dos seus amigos
+Respostas:
+Modelo Recomendado: Grafo
+As consultas principais percorrem relacionamentos entre pessoas, como amigos dos amigos e caminhos de indicação.
+O banco de grafos é adequado para encontrar caminhos e conexões entre entidades.
+Evita a necessidade de vários self-joins para percorrer até 6 níveis de relacionamentos.
+Principal risco: Pode ser mais difícil realizar consultas e relatórios tradicionais sobre os dados.
+
+DESAFIO
+Respostas:
+Cenário escolhido: PayBank
+O sistema deve parar de realizar a transferência durante uma partição para evitar inconsistências e saldos incorretos.
+Nesse caso, a Disponibilidade (A) é sacrificada para preservar a Consistência (C).
+A Tolerância à Partição (P) é mantida, pois o sistema precisa lidar com a partição sem confirmar operações que possam gerar dados incorretos.
+CAP: CP — o sistema prefere não responder temporariamente a uma transferência do que correr o risco de apresentar um saldo incorreto.
