@@ -1,1 +1,49 @@
-teste
+ENDPOINT 01 — POST /api/getAlunos
+Respostas
+Problemas: Está usando POST para consultar dados, a rota possui get desnecessariamente e retorna muitos registros de uma vez, sem paginação.
+Método: GET
+Rota: /api/alunos
+Status codes: 200 OK, 400 Bad Request
+
+ENDPOINT 02 — GET /deletarAluno?id=7
+Respostas
+Problemas: Está usando GET para excluir um aluno, alterando o estado do servidor. Além disso, a rota representa uma ação e retorna 200 OK mesmo quando o aluno não existe.
+Método: DELETE
+Rota: /api/alunos/7
+Status codes: 204 No Content, 404 Not Found
+
+ENDPOINT 03 — POST /api/alunos
+Respostas
+Problemas: O método POST está correto, mas deveria retornar 201 Created e informar o ID do aluno criado, evitando uma nova consulta à lista inteira.
+Método: POST
+Rota: /api/alunos
+Status codes: 201 Created, 400 Bad Request
+
+ENDPOINT 04 — GET /escolas/1/turmas/3/alunos/25/matriculas/88/disciplinas/12
+Respostas
+Problemas: A rota é muito longa e complexa, exigindo vários IDs. O cliente fica muito dependente da estrutura interna dos recursos.
+Método: GET
+Rota: /api/disciplinas/12
+Status codes: 200 OK, 404 Not Found
+
+ENDPOINT 05 — GET /api/alunos/7/matriculas
+Respostas
+Problemas: Está retornando 200 OK para um erro e HTML em uma API que deveria retornar JSON. Isso faz o aplicativo mobile quebrar ao tentar interpretar a resposta.
+Método: GET
+Rota: /api/alunos/7/matriculas
+Status codes: 200 OK, 404 Not Found, 500 Internal Server Error
+
+ENDPOINT 06 — PUT /api/atualizarNotaParcial
+Respostas
+Problemas: Está usando PUT para alterar apenas uma parte do recurso, os dados estão na query string e a rota representa uma ação em vez de um recurso.
+Método: PATCH
+Rota: /api/alunos/7/disciplinas/12
+Status codes: 200 OK, 204 No Content, 400 Bad Request, 404 Not Found
+
+Desafio
+Respostas
+Problema: A API não possui versionamento, então mudanças futuras podem quebrar o aplicativo antigo.
+Método: GET, POST, PUT, PATCH ou DELETE, conforme a operação.
+Rota: /api/v1/alunos e /api/v2/alunos
+Status codes: Mantêm os códigos HTTP adequados para cada operação.
+A versão v1 continuaria funcionando para o aplicativo antigo, enquanto a v2 poderia receber as novas mudanças sem quebrá-lo.
