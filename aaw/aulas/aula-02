@@ -1,0 +1,74 @@
+#
+
+REQUISIÇÃO 01 — A prateleira inteira
+Respostas:
+1. Cliente pediu: GET /api/livros - Pediu para consultar todos os livros.
+2. Status: 200 OK - Deu certo.
+3. Repetindo 03 vezes, o servidor não muda de estado e a resposta continua sendo a mesma, se os dados não forem alterados.
+
+REQUISIÇÃO 02 — O livro fantasma
+Respostas:
+1. Cliente pediu: GET /api/livros/99 - Pediu para consultar o livro de ID 99.
+2. Status: 404 Nou found - o livro não foi encontrado.
+3. Repetindo 03 vezes, o servidor não muda e a resposta continua 404.
+
+REQUISIÇÃO 03 — Livro novo na estante
+Respostas:
+1. Cliente pediu: POST /api/livros - Criar um novo livro.
+2. Status: 201 Created - o livro foi criado com sucesso.
+3. Repetindo 03 vezes, pois POST não é idempotente.
+Header Location: indica o endereço do novo livro: /api/livros/8.
+
+REQUISIÇÃO 04 — Corrigindo a ficha completa
+Respostas:
+Cliente pediu: PUT /api/livros/7 - Atualizar completamente o livro 7.
+Status: 200 OK - atualização realizada com sucesso.
+Repetindo 03 vezes, o estado final será o mesmo, pois PUT é idempotente.
+
+REQUISIÇÃO 05 — Fora do catálogo
+Respostas:
+Cliente pediu: DELETE /api/livros/7 - Excluir o livro 7.
+Status: 204 No Content - exclusão realizada com sucesso, sem conteúdo na resposta.
+Repetindo 03 vezes, depois da primeira exclusão o estado não muda mais. Na segunda tentativa, é esperado 404 Not Found.
+
+REQUISIÇÃO 06 — O cadastro capenga
+Respostas:
+Cliente pediu: POST /api/livros - Criar um novo livro.
+Status: 400 Bad Request - a requisição está inválida porque faltou o título.
+Repetindo 03 vezes, nada é criado e a resposta continua 400.
+
+TABELA-SÍNTESE — Os verbos do HTTP
+GET
+Para que serve: Consultar
+Seguro: Sim
+Idempotente: Sim
+Status típicos: 200, 404
+
+POST
+Para que serve: Criar
+Seguro: Não
+Idempotente: Não
+Status típicos: 201, 400, 409
+
+PUT
+Para que serve: Atualizar/substituir
+Seguro: Não
+Idempotente: Sim
+Status típicos: 200, 201, 204, 404
+
+PATCH
+Para que serve: Atualizar parcialmente
+Seguro: Não
+Idempotente: Não necessariamente
+Status típicos: 200, 204, 400, 404
+
+DELETE
+Para que serve: Excluir
+Seguro: Não
+Idempotente: Sim
+Status típicos: 204, 404
+
+Desafio - Patch x Put
+Put é usado para atualizar e/ou substituir o recurso inteiro.
+Patch é usado para alterar apenas uma parte do recurso.
+No app do banco, eu usaria PATCH, porque quero alterar somente o apelido e não todos os outros campos do perfil.
