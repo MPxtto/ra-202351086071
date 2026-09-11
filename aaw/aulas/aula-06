@@ -1,0 +1,46 @@
+CENÁRIO 01 — PagFácil — aprovar ou negar AGORA
+Respostas:
+Estilo recomendado: Síncrono
+Fluxo: Cliente → Pagamentos → Contas → Pagamentos → Cliente
+Justificativa:
+O resultado de Contas é necessário imediatamente para decidir se o pagamento será aprovado.
+O cliente está aguardando a resposta na tela.
+O tempo normal de resposta é de apenas 80 ms.
+Principal risco: Se o serviço de Contas estiver indisponível ou lento, o pagamento também poderá ficar lento ou falhar.
+
+CENÁRIO 02 — CadastraJá — o e-mail de boas-vindas
+Respostas:
+Estilo recomendado: Assíncrono (fila/evento)
+Fluxo: Cliente → Cadastro → Fila → Serviço de E-mail → Provedor de E-mail
+Justificativa:
+O usuário não precisa esperar o e-mail para começar a usar o aplicativo.
+O provedor demora até 8 segundos e pode falhar, então a fila permite processar o envio depois.
+Em caso de falha, a mensagem pode ser tentada novamente automaticamente.
+Principal risco: A mensagem pode ser processada mais de uma vez, causando o envio duplicado do e-mail.
+
+CENÁRIO 03 — MegaMarket — baixa de estoque nos picos
+Respostas:
+Estilo recomendado: Assíncrono (fila/evento)
+Fluxo: Cliente → Checkout → Fila → Estoque
+Justificativa:
+O atraso de alguns segundos na atualização do estoque é aceitável.
+A fila absorve os picos de tráfego e evita sobrecarregar o serviço de Estoque.
+A mensagem pode ser reenviada caso o Estoque esteja indisponível, evitando perder a baixa.
+Principal risco: O estoque ficará temporariamente desatualizado e pode haver problemas se uma mensagem for processada mais de uma vez.
+
+CENÁRIO 04 — AppBanco — uma tela, cinco serviços
+Respostas:
+Estilo recomendado: API Gateway/BFF
+Fluxo: App Mobile → BFF → Serviços (Saldo, Fatura, Investimentos, Empréstimos e Cashback) → BFF → App Mobile
+Justificativa:
+O BFF concentra as chamadas aos cinco serviços e entrega uma resposta única para o aplicativo.
+O aplicativo deixa de precisar conhecer os formatos, autenticações e endpoints de cada serviço.
+Pode existir um BFF específico para mobile e outro para web.
+Principal risco: O BFF pode se tornar um ponto de falha ou ficar muito complexo se concentrar responsabilidades demais.
+
+DESAFIO
+Respostas:
+Cenário escolhido: MegaMarket — baixa de estoque.
+Se a mesma mensagem chegar duas vezes, o estoque pode ser baixado duas vezes.
+O consumidor deve ser idempotente, verificando se aquela venda/evento já foi processada.
+Uma forma de fazer isso é usar um ID único da mensagem ou da venda e registrar os eventos já processados. Se o mesmo ID chegar novamente, o consumidor ignora a mensagem duplicada.
