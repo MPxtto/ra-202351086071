@@ -2,4 +2,18 @@
 
 Mini-Quiz
 Respostas:
-1
+1. É recomendado a arquitetura Monolítica, 
+porque é a simplicidade operacional, rapidez de desenvolvimento e facilidade de deploy para uma equipe pequena trabalhando com um dominio em fase de descoberta
+
+2. Falso, Embora permitam escalar serviços específicos individualmente, os microsserviços introduzem custos operacionais significativos de infraestrutura, tráfego de rede e pipelines de deploy, podendo ser mais caros do que um monólito bem projetado.
+
+3. Latência e falhas de rede: As chamadas de método em memória (nanossegundos) passam a ser chamadas de rede (milissegundos), sujeitas a falhas de conexão.
+   Complexidade de dados: Transações ACID em banco único são substituídas por consistência eventual entre múltiplos bancos.
+   Complexidade operacional: Necessidade de rastreamento distribuído, múltiplos pipelines e orquestração de tráfego.
+
+Desafio Operação Resgate
+Resposta:
+O desafio consiste em decompor o monólito LojaMonolito, separando o módulo de produtos em uma nova API, chamada ServicoProdutos, executada na porta 5101. A comunicação entre os serviços passa a ser feita via HttpClient.
+No fluxo normal, ao criar um pedido, a LojaMonolito consulta o ServicoProdutos para verificar se o produto existe. Com os dois serviços ativos, a validação ocorre normalmente e o pedido é criado, retornando 201 Created.
+Na etapa bônus, o ServicoProdutos é interrompido. Como a LojaMonolito não consegue validar o produto, a criação do pedido falha e retorna 400 Bad Request, com a mensagem "Produto não encontrado (ou serviço fora?)".
+O desafio demonstra o principal trade-off da arquitetura distribuída: ganha-se independência de deploy e escalabilidade, mas uma simples chamada interna passa a depender da rede, ficando sujeita a latência, falhas de comunicação e indisponibilidade.
