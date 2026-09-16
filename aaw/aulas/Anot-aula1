@@ -1,0 +1,168 @@
+# Aula 01 — Do Monólito aos Microsserviços
+
+## 1. Arquitetura Cliente-Servidor
+
+A arquitetura **cliente-servidor** divide uma aplicação em duas partes principais:
+
+* **Cliente:** é a parte com a qual o usuário interage. Exibe a interface, renderiza HTML/CSS, recebe cliques e pode fazer validações simples.
+* **Servidor:** recebe as solicitações do cliente e executa a lógica do sistema. Também é responsável pelo acesso ao banco de dados, processamento das informações e regras de segurança.
+
+**Exemplo:** em uma loja virtual, o navegador mostra os produtos ao usuário (cliente), enquanto o servidor consulta o banco de dados para buscar preços, estoque e informações dos produtos.
+
+---
+
+## 2. Monólito x Microsserviços
+
+### Arquitetura Monolítica
+
+No **monólito**, todas as principais funcionalidades fazem parte de uma única aplicação.
+
+Por exemplo:
+
+`Catálogo + Carrinho + Pagamentos + Boletos → Uma aplicação`
+
+Características:
+
+* **Uma única base de código:** todos os módulos ficam no mesmo projeto.
+* **Um único deploy:** normalmente, uma atualização exige publicar toda a aplicação.
+* **Banco compartilhado:** os módulos geralmente utilizam o mesmo banco de dados.
+* **Comunicação rápida:** como tudo está dentro da mesma aplicação, os módulos podem conversar diretamente por chamadas de funções em memória.
+* **Transações mais simples:** um banco centralizado facilita o uso de transações **ACID**, garantindo maior consistência dos dados.
+* **Falhas podem afetar todo o sistema:** um problema grave em determinado módulo pode derrubar toda a aplicação.
+* **Escalabilidade menos flexível:** se apenas o módulo de Pagamentos estiver sobrecarregado, pode ser necessário aumentar os recursos ou criar cópias de toda a aplicação.
+
+**Resumindo:** o monólito costuma ser mais simples de desenvolver, executar e manter inicialmente, mas pode apresentar dificuldades conforme o sistema e a equipe crescem.
+
+### Arquitetura de Microsserviços
+
+Nos **microsserviços**, a aplicação é dividida em vários serviços menores e independentes, normalmente separados de acordo com as áreas de negócio.
+
+Exemplo:
+
+`Serviço de Catálogo`
+`Serviço de Carrinho`
+`Serviço de Pagamentos`
+`Serviço de Boletos`
+
+Cada um funciona como uma aplicação independente.
+
+Características:
+
+* **Separação por domínio:** cada serviço possui uma responsabilidade específica.
+* **Banco por serviço:** é comum utilizar o padrão *database per service*, em que cada microsserviço controla seus próprios dados.
+* **Deploy independente:** um serviço pode ser atualizado sem necessariamente publicar os demais.
+* **Comunicação pela rede:** os serviços conversam utilizando tecnologias como HTTP/REST, filas e eventos.
+* **Falhas mais isoladas:** se o serviço de Boletos apresentar problemas, isso não significa necessariamente que o Catálogo também ficará indisponível.
+* **Escalabilidade independente:** é possível aumentar apenas os recursos do serviço que possui maior demanda.
+
+**Resumindo:** microsserviços oferecem maior independência e flexibilidade, mas também tornam a infraestrutura e a comunicação mais complexas.
+
+---
+
+## 3. O Preço da Distribuição — Trade-offs
+
+Migrar de um monólito para microsserviços traz vantagens, mas também cria **novos problemas que precisam ser administrados**. Essa troca entre vantagens e desvantagens é chamada de **trade-off**.
+
+### Latência e falhas de rede
+
+No monólito, uma parte do sistema pode chamar outra diretamente na memória, o que é extremamente rápido.
+
+Nos microsserviços, essa comunicação precisa atravessar a rede:
+
+`Serviço A → HTTP → Rede → Serviço B`
+
+Isso adiciona **latência** e novas possibilidades de falha. O outro serviço pode estar desligado, demorar para responder ou existir algum problema de conexão.
+
+### Consistência dos dados
+
+No monólito, um único banco facilita a utilização de transações **ACID**.
+
+Nos microsserviços, diferentes serviços podem possuir bancos separados. Por isso, muitas arquiteturas precisam trabalhar com **consistência eventual**, na qual os dados podem levar algum tempo para ficarem sincronizados entre todos os serviços.
+
+### Observabilidade
+
+Em um monólito, geralmente é mais simples acompanhar o que aconteceu utilizando os logs da própria aplicação.
+
+Em microsserviços, uma única requisição pode passar por diversos serviços:
+
+`Cliente → Pedidos → Produtos → Pagamentos → Entrega`
+
+Por isso, são necessárias ferramentas de **logs centralizados, métricas e rastreamento distribuído** para descobrir onde ocorreu determinado problema.
+
+### Complexidade operacional
+
+Um monólito pode possuir apenas um processo de deploy.
+
+Com microsserviços, podem existir dezenas de aplicações independentes, cada uma com seus próprios processos de **CI/CD, monitoramento, configuração e infraestrutura**.
+
+Por isso, microsserviços normalmente exigem maior maturidade em **DevOps e automação**.
+
+### Exemplo do Prime Video
+
+Um caso conhecido é o do **Prime Video**, que redesenhou parte de seu sistema de monitoramento, substituindo uma solução distribuída por uma arquitetura monolítica. Segundo a equipe, essa mudança reduziu significativamente os custos de infraestrutura.
+
+O exemplo demonstra que **microsserviços não são automaticamente melhores**. A arquitetura deve ser escolhida de acordo com o problema que precisa ser resolvido.
+
+---
+
+## 4. Quando utilizar cada arquitetura?
+
+A escolha depende principalmente do tamanho do projeto, da equipe e das necessidades do sistema.
+
+| Fator       | Monólito                               | Microsserviços                             |
+| ----------- | -------------------------------------- | ------------------------------------------ |
+| **Equipe**  | Pequena                                | Vários times independentes                 |
+| **Domínio** | Ainda sendo descoberto                 | Bem conhecido e definido                   |
+| **Escala**  | Demanda relativamente uniforme         | Serviços possuem demandas muito diferentes |
+| **DevOps**  | Pouca experiência ou automação         | CI/CD e monitoramento maduros              |
+| **Falhas**  | Reiniciar toda a aplicação é aceitável | É importante isolar as falhas              |
+
+### Estratégia "Monolith First"
+
+A ideia de **Monolith First**, associada a Martin Fowler, é começar com uma arquitetura mais simples e bem organizada.
+
+Em vez de criar diversos microsserviços desde o primeiro dia:
+
+`Monólito bem estruturado → Sistema cresce → Surgem necessidades reais → Extração de microsserviços`
+
+Dessa forma, os microsserviços são criados quando existem **motivos concretos**, como problemas de escala, necessidade de deploy independente ou crescimento das equipes.
+
+---
+
+## 5. Desafio: Operação Resgate
+
+Na atividade prática, o módulo de Produtos foi retirado da aplicação `LojaMonolito` e transformado em uma API independente chamada `ServicoProdutos`.
+
+### Decomposição por domínio
+
+A separação foi realizada com base na responsabilidade de negócio:
+
+`LojaMonolito → Produtos → ServicoProdutos`
+
+Isso representa a ideia de dividir uma aplicação por **domínios**, e não simplesmente por tecnologias ou camadas.
+
+### Novo poder: independência
+
+O `ServicoProdutos` passou a funcionar como um processo separado. Dessa forma, ele pode evoluir, receber deploy e ser escalado independentemente da aplicação principal.
+
+### Novo custo: dependência da rede
+
+Antes da separação, a Loja consultava os produtos diretamente dentro da própria aplicação.
+
+Depois:
+
+`LojaMonolito → HttpClient → ServicoProdutos`
+
+A consulta passou a depender de uma chamada HTTP pela rede.
+
+Quando o `ServicoProdutos` foi desligado durante o exercício, a `LojaMonolito` não conseguiu realizar a consulta. Isso demonstrou, na prática, um dos principais desafios dos sistemas distribuídos: **um serviço pode depender de outro que está lento ou indisponível**.
+
+### Ideia principal da aula
+
+A principal diferença pode ser resumida assim:
+
+**Monólito:** mais simples e com comunicação interna rápida, porém as partes da aplicação ficam mais dependentes umas das outras.
+
+**Microsserviços:** oferecem maior independência, isolamento e possibilidade de escalar serviços separadamente, porém introduzem comunicação pela rede e maior complexidade operacional.
+
+Portanto, **não existe uma arquitetura que seja sempre melhor**. A escolha depende das necessidades, do tamanho e da maturidade do projeto.
