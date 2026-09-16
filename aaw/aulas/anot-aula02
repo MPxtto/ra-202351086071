@@ -1,0 +1,243 @@
+Resumo de Estudos: Aula 02 — REST: Fundamentos
+1. O que é REST?
+
+REST (Representational State Transfer) é um conjunto de princípios utilizados para organizar a comunicação entre sistemas por meio de APIs Web.
+
+A ideia principal é simples: a API disponibiliza recursos (como livros, usuários ou pedidos), e o cliente utiliza os métodos do HTTP para consultar ou modificar esses recursos.
+
+Exemplo:
+
+GET /api/livros
+
+Significa: "Quero consultar os livros."
+
+2. Os 4 elementos principais do REST
+Recurso
+
+Um recurso é aquilo que queremos consultar ou manipular no sistema.
+
+Exemplos:
+
+Livro
+Usuário
+Produto
+Pedido
+Aluno
+URI — endereço do recurso
+
+A URI identifica onde o recurso está disponível.
+
+Por convenção, utilizamos substantivos, geralmente no plural:
+
+/api/livros
+/api/livros/7
+/api/produtos
+/api/pedidos/15
+
+Evita-se colocar a ação na própria rota:
+
+❌ /api/getLivro
+❌ /api/criarLivro
+
+✅ /api/livros
+
+Isso acontece porque quem informa a ação é o verbo HTTP.
+
+Verbo HTTP — o que queremos fazer
+
+Os principais são:
+
+GET     → Consultar
+POST    → Criar
+PUT     → Substituir
+PATCH   → Alterar parcialmente
+DELETE  → Excluir
+
+Assim, podemos utilizar a mesma rota para diferentes operações:
+
+GET    /api/livros/7 → Consultar o livro 7
+PUT    /api/livros/7 → Substituir o livro 7
+DELETE /api/livros/7 → Excluir o livro 7
+Representação
+
+É a forma utilizada para representar o recurso durante a comunicação. O formato mais comum atualmente é JSON.
+
+Exemplo:
+
+{
+  "id": 7,
+  "titulo": "O Programador Pragmático",
+  "autor": "Hunt & Thomas",
+  "ano": 1999
+}
+3. Verbos HTTP
+Verbo	Função	Respostas comuns
+GET	Consultar	200 OK / 404 Not Found
+POST	Criar	201 Created / 400 Bad Request
+PUT	Substituir completamente	200 OK / 404 Not Found
+PATCH	Alterar parcialmente	200 OK / 404 Not Found
+DELETE	Excluir	204 No Content / 404 Not Found
+
+Uma diferença importante é entre PUT e PATCH.
+
+Imagine este livro:
+
+{
+  "id": 7,
+  "titulo": "Clean Code",
+  "autor": "Robert C. Martin",
+  "ano": 2008
+}
+
+Com PUT, a ideia é enviar uma nova representação completa para substituir o recurso.
+
+Com PATCH, poderíamos alterar somente:
+
+{
+  "ano": 2009
+}
+4. Idempotência
+
+Uma operação é idempotente quando executá-la várias vezes produz o mesmo estado final no servidor que executá-la uma única vez.
+
+Por exemplo:
+
+DELETE /api/livros/7
+
+Na primeira execução, o livro é removido.
+
+Se a mesma operação for repetida, o livro continuará inexistente. A resposta HTTP pode mudar, mas o estado final do recurso permanece o mesmo.
+
+De maneira geral:
+
+GET     → Idempotente
+POST    → Não idempotente
+PUT     → Idempotente
+PATCH   → Depende da implementação
+DELETE  → Idempotente
+
+O POST normalmente não é idempotente porque repetir:
+
+POST /api/livros
+
+pode criar vários recursos diferentes.
+
+5. Status Codes
+
+Os status codes informam o resultado de uma requisição HTTP.
+
+2xx — Sucesso
+200 OK
+→ Operação realizada normalmente.
+
+201 Created
+→ Um novo recurso foi criado.
+
+204 No Content
+→ Operação realizada, mas não existe conteúdo para retornar.
+
+No 201 Created, é comum retornar também o cabeçalho Location, indicando onde o recurso criado pode ser encontrado.
+
+3xx — Redirecionamento
+
+Indicam situações relacionadas a redirecionamento ou cache.
+
+301 Moved Permanently
+304 Not Modified
+4xx — Problema relacionado à requisição do cliente
+400 Bad Request
+→ Requisição inválida ou erro de validação.
+
+401 Unauthorized
+→ Autenticação necessária ou inválida.
+
+403 Forbidden
+→ Cliente identificado, mas sem permissão.
+
+404 Not Found
+→ Recurso não encontrado.
+
+409 Conflict
+→ A requisição gera conflito com o estado atual do recurso.
+5xx — Erro no servidor
+500 Internal Server Error
+→ Erro interno inesperado.
+
+502 Bad Gateway
+→ Problema na comunicação com outro servidor.
+
+503 Service Unavailable
+→ Serviço temporariamente indisponível.
+6. Stateless — servidor sem estado de sessão
+
+Outro princípio importante do REST é o statelessness.
+
+Significa que cada requisição deve possuir as informações necessárias para que o servidor consiga processá-la, sem depender de uma sessão mantida na memória do servidor entre uma requisição e outra.
+
+Por exemplo:
+
+Requisição 1
+Cliente → Servidor A
+
+Requisição 2
+Cliente → Servidor B
+
+A segunda requisição não deveria depender de alguma informação que ficou armazenada somente na memória do Servidor A.
+
+Isso facilita a escalabilidade horizontal, pois podemos possuir várias instâncias da API:
+
+                    → Servidor 1
+Cliente → Load Balancer → Servidor 2
+                    → Servidor 3
+
+O balanceador de carga pode distribuir as requisições entre diferentes servidores.
+
+Importante: stateless não significa que o servidor não pode usar banco de dados. Ele pode armazenar dados persistentes normalmente. O princípio trata principalmente de não depender de estado de sessão mantido pelo servidor entre requisições.
+
+7. Relacionando com o código da BibliotecaApi
+
+No código desenvolvido em aula, temos exatamente esses conceitos:
+
+GET /api/livros
+→ Retorna todos os livros
+→ 200 OK
+
+GET /api/livros/7
+→ Procura o livro 7
+→ 200 OK ou 404 Not Found
+
+POST /api/livros
+→ Cria um livro
+→ 201 Created ou 400 Bad Request
+
+PUT /api/livros/7
+→ Substitui o livro 7
+→ 200 OK ou 404 Not Found
+
+DELETE /api/livros/7
+→ Remove o livro 7
+→ 204 No Content ou 404 Not Found
+
+O LivrosController que você programou é, portanto, uma aplicação prática dos conceitos apresentados nesta aula.
+
+Para memorizar
+
+A lógica básica de REST pode ser resumida assim:
+
+URI = QUAL recurso?
+
+Verbo HTTP = O QUE fazer com ele?
+
+JSON = COMO o recurso é representado?
+
+Status Code = O QUE aconteceu?
+
+Por exemplo:
+
+POST /api/livros
+        ↓
+Criar um livro
+        ↓
+201 Created
+
+Esse é o contrato REST: o cliente consegue entender o que pedir, onde pedir e qual foi o resultado da operação.
