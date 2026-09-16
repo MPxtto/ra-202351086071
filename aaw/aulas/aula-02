@@ -72,3 +72,6 @@ Desafio - Patch x Put
 Put é usado para atualizar e/ou substituir o recurso inteiro.
 Patch é usado para alterar apenas uma parte do recurso.
 No app do banco, eu usaria PATCH, porque quero alterar somente o apelido e não todos os outros campos do perfil.
+
+
+LINK PARA POSTMAN: https://web.postman.co/workspace/My-Workspace~65d9e0d4-2d32-475c-896d-d4e66978d699/collection/58257921-bc2bff79-4c39-4d44-884d-218dafa46d6e?action=share&source=copy-link&creator=58257921
