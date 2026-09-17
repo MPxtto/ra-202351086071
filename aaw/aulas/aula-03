@@ -47,3 +47,5 @@ Método: GET, POST, PUT, PATCH ou DELETE, conforme a operação.
 Rota: /api/v1/alunos e /api/v2/alunos
 Status codes: Mantêm os códigos HTTP adequados para cada operação.
 A versão v1 continuaria funcionando para o aplicativo antigo, enquanto a v2 poderia receber as novas mudanças sem quebrá-lo.
+
+LINK POSTMAN: https://web.postman.co/workspace/My-Workspace~65d9e0d4-2d32-475c-896d-d4e66978d699/collection/58257921-8657fe35-e7c7-45a9-99b5-83c980930f46?action=share&source=copy-link&creator=58257921
