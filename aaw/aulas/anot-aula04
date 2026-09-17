@@ -1,0 +1,288 @@
+Anotações de Estudo: Aula 04 — REST: Revisão e Consolidação
+1. Restrições Arquiteturais do REST
+
+Nesta aula, o foco está nas restrições arquiteturais do REST, ou seja, princípios que ajudam a criar APIs organizadas, escaláveis e previsíveis.
+
+Cliente-Servidor
+
+Existe uma separação entre quem apresenta as informações e quem processa os dados e regras de negócio.
+
+Por exemplo:
+
+Frontend (React)
+       ↓ HTTP
+Backend (Java)
+       ↓
+Banco de Dados
+
+Isso permite que o frontend seja alterado ou até refeito sem necessariamente modificar o backend.
+
+Ideia principal: cliente e servidor possuem responsabilidades separadas e podem evoluir de maneira mais independente.
+
+Interface Uniforme
+
+A API deve possuir um padrão consistente e fácil de entender. As URIs identificam os recursos, enquanto os métodos HTTP indicam as ações.
+
+Exemplo:
+
+GET    /pedidos/123
+DELETE /pedidos/123
+
+A URI informa qual recurso está sendo acessado (pedidos/123), enquanto GET ou DELETE informa o que será feito.
+
+Por isso, devemos evitar:
+
+❌ /buscarPedido/123
+❌ /deletarPedido/123
+
+Ideia principal: quanto mais padronizada for a API, mais fácil será para outros desenvolvedores utilizá-la.
+
+Statelessness — Ausência de Estado
+
+Cada requisição deve possuir todas as informações necessárias para ser processada.
+
+O servidor não deve depender de informações de sessão armazenadas apenas na memória RAM de uma determinada instância.
+
+Isso permite:
+
+                  → Servidor 1
+Cliente → Load Balancer → Servidor 2
+                  → Servidor 3
+
+Uma requisição pode chegar ao Servidor 1 e a próxima ao Servidor 3 sem causar problemas.
+
+Benefício: facilita a escalabilidade horizontal, adicionando novas instâncias da aplicação para atender mais requisições.
+
+Cacheability — Capacidade de Cache
+
+Algumas respostas podem ser armazenadas temporariamente para evitar que o servidor processe repetidamente a mesma informação.
+
+Para controlar isso, podem ser utilizados cabeçalhos HTTP como:
+
+Cache-Control
+ETag
+
+Por exemplo, se determinado conteúdo não mudou, o cliente pode aproveitar uma versão armazenada anteriormente em vez de baixar tudo novamente.
+
+Benefícios:
+
+reduz o tráfego de rede;
+diminui a latência;
+reduz processamento desnecessário;
+pode diminuir consultas repetidas ao banco.
+Sistema em Camadas
+
+Entre o cliente e o servidor podem existir outros componentes:
+
+Cliente
+   ↓
+CDN
+   ↓
+WAF
+   ↓
+Proxy Reverso
+   ↓
+Servidor
+
+Alguns exemplos são:
+
+Proxy reverso: recebe e encaminha requisições para os servidores adequados.
+WAF: ajuda a proteger aplicações Web contra determinados ataques.
+CDN: distribui conteúdo por diferentes servidores para melhorar o acesso.
+
+O cliente não precisa conhecer toda essa estrutura interna.
+
+2. Nomenclaturas e Design de URIs
+
+Uma API deve manter um padrão de nomenclatura consistente.
+
+Existem diferentes formas de escrever nomes:
+
+camelCase
+primeiroNomePessoa
+
+PascalCase
+PrimeiroNomePessoa
+
+snake_case
+primeiro_nome_pessoa
+
+kebab-case
+primeiro-nome-pessoa
+
+Mais importante do que simplesmente escolher um deles é manter o mesmo padrão em toda a API.
+
+Erros que devem ser evitados
+
+Evite misturar singular e plural:
+
+❌ /produto
+❌ /clientes
+❌ /pedido
+
+Se o padrão escolhido for plural:
+
+✅ /produtos
+✅ /clientes
+✅ /pedidos
+
+Também devem ser evitadas URLs com ações:
+
+❌ /getProdutos
+❌ /criarPedido
+❌ /deletarAluno?id=7
+
+Uma estrutura RESTful seria:
+
+Incorreto	RESTful	Motivo
+POST /api/getProdutos	GET /produtos	GET já indica a consulta
+GET /deletarAluno?id=7	DELETE /alunos/7	DELETE representa a exclusão
+POST /criarPedido	POST /pedidos	POST representa a criação
+GET /buscarPorNome?n=ana	GET /alunos?nome=ana	Filtros ficam na query string
+3. Versionamento
+
+A versão pode fazer parte do endereço da API:
+
+/api/v1/alunos
+
+Quando ocorre uma alteração incompatível com os clientes atuais (breaking change), uma nova versão pode ser criada:
+
+/api/v1/alunos
+/api/v2/alunos
+
+Isso permite que sistemas antigos continuem utilizando a v1 enquanto outros migram para a v2.
+
+Já uma mudança aditiva, como adicionar um novo campo opcional sem quebrar os clientes existentes, normalmente não exige uma nova versão.
+
+4. Rotas Aninhadas
+
+Rotas aninhadas são utilizadas quando existe uma relação de pertencimento entre recursos.
+
+Exemplo:
+
+GET /alunos/1024/matriculas/88
+
+Isso representa a matrícula 88 pertencente ao aluno 1024.
+
+Entretanto, devemos evitar rotas muito profundas:
+
+❌ /escolas/1/turmas/3/alunos/25/matriculas/88/disciplinas
+
+Quando um recurso possui identidade própria, pode ser melhor acessá-lo diretamente:
+
+✅ /matriculas/88/disciplinas
+
+Regra prática: limitar o aninhamento a aproximadamente dois níveis.
+
+5. Paginação
+
+Quando uma API possui milhares ou milhões de registros, não é adequado retornar todos de uma vez.
+
+Utilizamos parâmetros como:
+
+GET /api/v1/alunos?page=2&size=20&sort=nome
+
+Onde:
+
+page=2     → segunda página
+size=20    → 20 registros por página
+sort=nome  → ordenar pelo nome
+
+A resposta pode trazer também informações sobre a paginação:
+
+{
+  "page": 2,
+  "size": 20,
+  "total": 5000,
+  "items": []
+}
+
+O servidor também deve estabelecer um limite máximo para size, evitando que alguém solicite uma quantidade exagerada de registros e sobrecarregue a aplicação.
+
+6. Métodos Seguros e Idempotentes
+Métodos seguros
+
+São métodos cuja intenção é consultar informações sem alterar o estado do recurso:
+
+GET
+HEAD
+OPTIONS
+Métodos idempotentes
+
+Uma operação é idempotente quando executá-la uma ou várias vezes produz o mesmo estado final no servidor.
+
+Nesta aula, destacam-se:
+
+GET
+PUT
+DELETE
+HEAD
+
+Por exemplo:
+
+DELETE /alunos/7
+
+Executar uma vez remove o aluno. Executar novamente não cria uma nova alteração: o aluno continua inexistente.
+
+7. Retry e Resiliência em Microsserviços
+
+Em sistemas distribuídos, a comunicação pela rede pode apresentar problemas:
+
+Serviço A → Rede → Serviço B
+                ❌ Timeout
+                ❌ Falha de conexão
+                ❌ Indisponibilidade
+
+Uma estratégia para lidar com falhas temporárias é o Retry, que significa tentar novamente uma operação automaticamente.
+
+Em C#, ferramentas como Polly podem ser utilizadas para implementar políticas de resiliência.
+
+Para operações idempotentes, como determinados GET e PUT, uma repetição pode ser realizada sem alterar o resultado final esperado.
+
+Cuidado com POST
+
+O POST normalmente não é idempotente.
+
+Imagine:
+
+POST /pagamentos
+
+O pagamento é realizado, mas ocorre um problema de rede antes de o cliente receber a confirmação.
+
+Se o cliente simplesmente repetir o POST:
+
+1ª tentativa → Pagamento realizado
+               ↓
+            Timeout
+
+2ª tentativa → Novo pagamento
+
+pode ocorrer uma cobrança duplicada.
+
+Por isso, operações não idempotentes exigem cuidado adicional antes da utilização de retries automáticos.
+
+8. Síntese da Aula 04
+
+Os principais conteúdos novos consolidados nesta aula são:
+
+Restrições REST
+    ├── Cliente-Servidor
+    ├── Interface Uniforme
+    ├── Stateless
+    ├── Cache
+    └── Sistema em Camadas
+
+Design
+    ├── Padrões de nomenclatura
+    ├── Versionamento
+    ├── Rotas aninhadas
+    └── Paginação
+
+Resiliência
+    ├── Métodos seguros
+    ├── Idempotência
+    └── Retry
+
+A ideia central pode ser resumida pela frase:
+
+"Uma boa API é aquela que o próximo dev usa sem precisar te perguntar nada."
