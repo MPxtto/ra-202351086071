@@ -1,0 +1,268 @@
+Resumo de Estudos: Aula 03 — REST: Design de APIs
+1. Substantivos, não verbos
+
+Uma API REST deve utilizar a URI para identificar o recurso e o método HTTP para indicar a ação.
+
+Por exemplo:
+
+GET    /alunos       → Buscar alunos
+POST   /alunos       → Criar aluno
+GET    /alunos/7     → Buscar aluno 7
+PUT    /alunos/7     → Substituir aluno 7
+DELETE /alunos/7     → Excluir aluno 7
+
+Por isso, devemos evitar:
+
+❌ /getAlunos
+❌ /criarAluno
+❌ /deletarAluno?id=7
+
+E utilizar:
+
+✅ GET /alunos
+✅ POST /alunos
+✅ DELETE /alunos/7
+GET não deve alterar dados
+
+O GET serve para consultar informações e não deve causar alterações no sistema.
+
+Portanto:
+
+❌ GET /deletarAluno?id=7
+
+O correto seria:
+
+✅ DELETE /alunos/7
+Filtros
+
+Quando queremos pesquisar ou filtrar uma coleção, utilizamos a query string:
+
+GET /alunos?nome=ana
+GET /produtos?categoria=livros
+
+Assim, /alunos continua sendo o recurso, enquanto nome=ana apenas define um filtro.
+
+2. Rotas aninhadas
+
+Podemos utilizar rotas aninhadas quando existe uma relação clara entre dois recursos.
+
+Por exemplo, para buscar as matrículas do aluno 1024:
+
+GET /alunos/1024/matriculas
+
+A rota deixa clara a relação:
+
+Aluno 1024
+    ↓
+Matrículas desse aluno
+
+Porém, devemos evitar rotas excessivamente grandes:
+
+❌ /escolas/1/turmas/3/alunos/25/matriculas/88/disciplinas
+
+Como matricula possui identidade própria, podemos simplificar:
+
+✅ /matriculas/88/disciplinas
+
+Regra prática: evitar mais de dois níveis de aninhamento. Se o recurso pode existir e ser acessado diretamente, considere transformá-lo em um recurso de nível principal (top-level).
+
+3. Versionamento da API
+
+Uma API funciona como um contrato entre o servidor e seus clientes.
+
+Podemos colocar sua versão diretamente na URL:
+
+/api/v1/alunos
+
+Se uma mudança futura for incompatível com a versão atual, podemos criar:
+
+/api/v1/alunos
+/api/v2/alunos
+
+As duas versões podem funcionar simultaneamente durante um período.
+
+Isso é importante porque diferentes clientes podem utilizar a API:
+
+API
+ ├── Site
+ ├── Aplicativo Android
+ ├── Aplicativo iOS
+ └── Outros sistemas
+
+Nem todos serão atualizados ao mesmo tempo.
+
+Breaking Change
+
+Uma breaking change é uma alteração que pode fazer um cliente existente parar de funcionar.
+
+Nesse caso, pode ser necessária uma nova versão.
+
+Já uma alteração aditiva, como adicionar um campo opcional sem prejudicar os clientes existentes, normalmente não exige uma nova versão.
+
+4. Paginação, filtros e ordenação
+
+Imagine uma API contendo 500.000 alunos.
+
+Não seria eficiente fazer:
+
+GET /alunos
+
+e enviar os 500.000 registros de uma vez.
+
+Para resolver isso, usamos paginação:
+
+GET /api/v1/alunos?page=2&size=20
+
+Significa:
+
+page=2  → Quero a página 2
+size=20 → Quero 20 registros por página
+
+A resposta pode ser:
+
+{
+  "page": 2,
+  "size": 20,
+  "total": 500000,
+  "items": [
+    ...
+  ]
+}
+
+O servidor também deve estabelecer um limite máximo.
+
+Por exemplo:
+
+size máximo = 100
+
+Assim, um cliente não consegue solicitar:
+
+/api/v1/alunos?size=500000
+
+e sobrecarregar desnecessariamente o servidor.
+
+Filtros e ordenação também podem utilizar a query string:
+
+GET /alunos?nome=ana
+GET /alunos?sort=nome
+GET /alunos?nome=ana&page=1&size=20
+5. Problem Details — padronização de erros
+
+Uma API precisa retornar erros de maneira padronizada e compreensível.
+
+Em vez de retornar apenas:
+
+Aluno não encontrado
+
+podemos utilizar o padrão Problem Details.
+
+Exemplo:
+
+{
+  "type": "https://exemplo.com/errors/aluno-nao-encontrado",
+  "title": "Aluno não encontrado",
+  "status": 404,
+  "detail": "Não existe um aluno com o ID informado.",
+  "instance": "/api/v1/alunos/7"
+}
+
+Os principais campos são:
+
+Campo	Significado
+type	Identifica o tipo do problema
+title	Nome/resumo do problema
+status	Código HTTP
+detail	Explicação específica
+instance	Requisição/recurso relacionado ao erro
+
+No ASP.NET Core, podemos utilizar o helper Problem():
+
+return Problem(
+    title: "Aluno não encontrado",
+    statusCode: 404
+);
+
+Isso facilita a criação de respostas de erro consistentes.
+
+6. Modelo de Maturidade de Richardson
+
+Esse modelo ajuda a entender o quanto uma API utiliza os elementos associados ao REST.
+
+Nível 0 — Um único endpoint
+
+Existe praticamente uma única rota e as operações são realizadas principalmente com POST.
+
+POST /api
+
+É semelhante a executar comandos remotos utilizando HTTP.
+
+Nível 1 — Recursos
+
+Começamos a separar os recursos:
+
+/alunos
+/matriculas
+/produtos
+
+Agora cada entidade possui sua própria URI.
+
+Nível 2 — Métodos HTTP + Status Codes
+
+Além dos recursos, utilizamos corretamente a semântica HTTP:
+
+GET    /alunos/7 → 200 OK
+POST   /alunos   → 201 Created
+DELETE /alunos/7 → 204 No Content
+
+Esse é o nível de design buscado na disciplina.
+
+Nível 3 — HATEOAS
+
+A resposta também fornece links indicando possíveis próximas ações.
+
+Exemplo simplificado:
+
+{
+  "id": 7,
+  "nome": "Ana",
+  "links": [
+    {
+      "rel": "matriculas",
+      "href": "/alunos/7/matriculas"
+    }
+  ]
+}
+
+Assim, a própria resposta ajuda o cliente a descobrir outras operações disponíveis.
+
+Para memorizar
+
+A Aula 03 pode ser resumida desta maneira:
+
+URI
+→ Identifica O QUE quero acessar
+→ /alunos/7
+
+Método HTTP
+→ Indica O QUE quero fazer
+→ GET, POST, PUT, PATCH, DELETE
+
+Query String
+→ Filtra, ordena ou pagina
+→ ?nome=ana&page=2&size=20
+
+Versão
+→ Protege o contrato da API
+→ /api/v1/alunos
+
+Status Code
+→ Informa o resultado
+→ 200, 201, 204, 400, 404...
+
+Problem Details
+→ Padroniza os erros
+
+Richardson
+→ Mostra a evolução do uso dos conceitos REST
+
+A ideia central desta aula é avançar de "uma API que funciona" para "uma API organizada, previsível e fácil de ser utilizada por outros sistemas".
